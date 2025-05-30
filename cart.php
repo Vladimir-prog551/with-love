@@ -64,7 +64,8 @@ $cart = $_SESSION['cart'];
                             <button class="btn">+</button>
                         </form>
                         <div class="name_price">
-                            <p><?php echo htmlspecialchars(number_format((int) ($product['price'] * $product['quantity']), 0, '', ' ')); ?> ₽
+                            <p><?php echo htmlspecialchars(number_format((int) ($product['price'] * $product['quantity']), 0, '', ' ')); ?>
+                                ₽
                             </p>
                         </div>
                     </div>
@@ -77,7 +78,7 @@ $cart = $_SESSION['cart'];
     <?php } else { ?>
         <p>Корзина пуста</p><br><br>
     <?php } ?>
-    <a href="/?page=listOrders"">Список ваших заказов</a>
+    <a href="/?page=listOrders">Список ваших заказов</a>
 </div>
 <style>
     /* Нежная базовая стилизация */
