@@ -7,10 +7,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Админ') {
 
 include('database/connection.php');
 
-$sql_categories = 'SELECT * FROM categories';
-$stmt_categories = $database->prepare($sql_categories);
-$stmt_categories->execute();
-$categories = $stmt_categories->fetchAll();
+$sql = 'SELECT * FROM categories';
+$stmt = $database->prepare($sql);
+$stmt->execute();
+$categories = $stmt->fetchAll();
 
 
 $title = '';
