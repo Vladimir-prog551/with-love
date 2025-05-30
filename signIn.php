@@ -84,9 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="username">Имя пользователя</label>
                 <div class="underline"></div>
             </div>
-
+            
             <div class="input-group">
-                <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
+                <input type="text" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
                 <label for="email">Электронная почта</label>
                 <div class="underline"></div>
             </div>
