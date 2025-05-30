@@ -1,16 +1,14 @@
 <?php
 
-if (empty($_SESSION['role'])) {
+if (!isset($_SESSION['role'])) {
     header('Location: /?page=404');
     exit();
 }
 
 include('database/connection.php');
 
-$user_info = '';
-$orders_info = '';
-$orders_number = '';
-$cart = $_SESSION['cart'];
+$user = '';
+$orders = '';
 $user_id = $_SESSION['id'];
 $message = '';
 
@@ -25,13 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'Некорректный адрес электронной почты';
     } else {
         // проверка email
-        $sql = 'SELECT COUNT(*) as total FROM users WHERE email = :email AND id != :id';
+        $sql = 'SELECT * FROM users WHERE email = :email AND id != :id';
         $stmt = $database->prepare($sql);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':id', $user_id);
         $stmt->execute();
         $check_email = $stmt->fetch();
-        if ($check_email['total'] == 0) {
+        if (empty($check_email)) {
             $sql = 'UPDATE users SET username = :username, email = :email WHERE id = :id';
             $stmt = $database->prepare($sql);
             $stmt->bindParam(':username', $username);
@@ -56,26 +54,25 @@ $sql = 'SELECT * FROM users WHERE id = :id';
 $stmt = $database->prepare($sql);
 $stmt->bindParam(':id', $user_id);
 $stmt->execute();
-$user_info = $stmt->fetch();
+$user = $stmt->fetch();
 
 // История заказов
-$sql = 'SELECT
-    o.id,
-    o.date_order AS date,
-    o.status,
-    f.title AS flower_name,
-    oi.price_at_order AS price,
-    oi.quantity
-FROM orders AS o
-JOIN order_items AS oi ON o.id = oi.order_id
-JOIN flowers AS f ON oi.flower_id = f.id
-WHERE user_id = :user_id
-ORDER BY o.id
-';
+// 1. Поиск заказов нашего пользователя
+$sql = 'SELECT * FROM orders WHERE user_id = :user_id';
 $stmt = $database->prepare($sql);
 $stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
 $orders = $stmt->fetchAll();
+// 2. Получение товаров наших заказов
+foreach ($orders as &$order):
+    $sql = 'SELECT * FROM order_items WHERE order_id = :order:id';
+    $stmt = $database->prepare($sql);
+    $stmt->bindParam(':order_id', $order['id']);
+    $stmt->execute();
+    $order['flowers'] = $stmt->fetchAll();
+endforeach;
+unset($order);
+
 ?>
 
 <div class="products container">
@@ -89,7 +86,7 @@ $orders = $stmt->fetchAll();
                     <label for="username">Имя пользователя</label>
                 </div>
                 <div class="input-group">
-                    <input type="email" id="email" name="email" placeholder="Email"
+                    <input type="text" id="email" name="email" placeholder="Email"
                         value="<?php echo htmlspecialchars($user_info['email']); ?>">
                     <label for="email">Электронная почта</label>
                 </div>
@@ -103,31 +100,13 @@ $orders = $stmt->fetchAll();
     <h3 style="margin:2rem 0 1rem">История заказов</h3>
 
     <?php
-    $previous_order_id = null;
-    $is_table_open = false;
-    $total = 0;
-    foreach ($orders as $order) {
-        if ($order['id'] != $previous_order_id) {
-            if ($is_table_open) {
-                ?>
-                </tbody>
-                </table>
-            </div>
-            <?php
-            }
-
-            ?>
+    foreach ($orders as $order):
+        $total = 0;
+        ?>
         <div class="order-block">
             <div class="order-header">
                 <div>Заказ №<?php echo $order['id']; ?> от <?php echo $order['date']; ?></div>
-                <div><span style="font-weight: 300">Статус: </span><?php
-                $sql = 'SELECT * FROM statuses WHERE id = :id';
-                $stmt = $database->prepare($sql);
-                $stmt->bindParam(':id', $order['status_id']);
-                $stmt->execute();
-                $t = $stmt->fetch();
-                echo $t['name'];
-                ?></div>
+                <div><span style="font-weight: 300">Статус: </span><?php echo $order['status']; ?></div>
             </div>
             <table class="order-products">
                 <thead>
@@ -139,40 +118,28 @@ $orders = $stmt->fetchAll();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    $previous_order_id = $order['id'];
-                    $is_table_open = true;
-        }
-        ?>
-                <tr>
-                    <td><?php echo $order['flower_name']; ?></td>
-                    <td><?php echo $order['price']; ?></td>
-                    <td><?php echo $order['quantity']; ?></td>
-                    <td><?php echo $order['price'] * $order['quantity'];
-                    $total += $order['price'] * $order['quantity']; ?>
-                    </td>
-                </tr>
-                <?php
-    }
+                    <?php foreach ($order['flowers'] as $flower): ?>
+                        <tr>
+                            <td><?php echo $flower['flower_title']; ?></td>
+                            <td><?php echo number_format((int) ($flower['price_at_order']), 0, '', ' '); ?> ₽</td>
+                            <td><?php echo $flower['quantity']; ?></td>
+                            <td><?php echo number_format((int) ($flower['flower_title'] * $flower['price_at_order']), 0, '', ' '); ?>
+                                ₽</td>
+                        </tr>
+                        <?php $total += $flower['flower_title'] * $flower['price_at_order']; ?>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
 
-    if ($is_table_open) {
-        ?>
-            </tbody>
-        </table>
-        <p><strong>Общая сумма: </strong><?php echo $total; ?></p>
-    </div>
-    <?php
-    }
+            <p><strong>Итого по заказу: <?php echo number_format((int) ($total), 0, '', ' '); ?> ₽</strong></p>
+        </div>
+    <?php endforeach; ?>
 
-    if ($previous_order_id === null) { ?>
-    <p>Нет заказов</p>
-<?php } ?>
-
-
-<?php if (!empty($message)) { ?>
-    <p><?php echo $message; ?></p>
-<?php } ?>
+    <?php if (!empty($message)) { ?>
+        <p><?php echo $message; ?></p>
+    <?php } ?>
 </div>
+
 <style>
     /* Table */
     table {
