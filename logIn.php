@@ -1,6 +1,6 @@
 <?php
 
-if (!empty($_SESSION['role'])) {
+if (isset($_SESSION['role'])) {
     header('Location: /?page=404');
     exit();
 }
@@ -89,10 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 <!-- log_in end -->
 
-<?php
-if (!empty($message)) {
-    ?>
-    <p><?php echo $message; ?> </p>
-    <?php
-}
-?>
+<div class="products container">
+    <?php if (!empty($message)) { ?>
+        <p><?php echo $message; ?> </p>
+    <?php } ?>
+</div>
