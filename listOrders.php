@@ -1,59 +1,77 @@
 <?php
 
-if (empty($_SESSION['role'])) {
+if (!isset($_SESSION['role'])) {
     header('Location: /?page=404');
     exit();
 }
 
 include('database/connection.php');
 
-$email = $_SESSION['email'];
+$user_id = $_SESSION['id'];
 
-$sql = 'SELECT * FROM orders WHERE email = :email';
+// История заказов
+// 1. Поиск заказов нашего пользователя
+$sql = 'SELECT * FROM orders WHERE user_id = :user_id';
 $stmt = $database->prepare($sql);
-$stmt->bindParam(':email', $email);
+$stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
 $orders = $stmt->fetchAll();
+// 2. Получение товаров наших заказов
+foreach ($orders as &$order):
+    $sql = 'SELECT * FROM order_items WHERE order_id = :order:id';
+    $stmt = $database->prepare($sql);
+    $stmt->bindParam(':order_id', $order['id']);
+    $stmt->execute();
+    $order['flowers'] = $stmt->fetchAll();
+endforeach;
+unset($order);
 
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
+<div class="products container">
+    <h3 style="margin:2rem 0 1rem">История заказов</h3>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-
-<body>
-    <div class="panel container">
-        <div class="left_menu">
-            <p>Список ваших заказов</p>
-        </div>
-        <div class="right_content">
-            <?php if (!empty($orders)) { ?>
-                <div class="orders_container">
-                    <?php foreach ($orders as $order): ?>
-                        <div class="products_card">
-                            <p>Название товара: <?php
-                            $sql = 'SELECT * FROM flowers WHERE id = :id';
-                            $stmt = $database->prepare($sql);
-                            $stmt->bindParam(':id', $order['flower_id']);
-                            $stmt->execute();
-                            $temp = $stmt->fetch();
-                            echo $temp['title'];
-                            ?></p><br>
-                            <p>Цена товара: <?php echo $order['order_price']; ?></p><br>
-                            <img src="<?php echo $temp['image']; ?>" alt="">
-                        </div>
+    <?php
+    foreach ($orders as $order):
+        $total = 0;
+        ?>
+        <div class="order-block">
+            <div class="order-header">
+                <div>Заказ №<?php echo $order['id']; ?> от <?php echo $order['date']; ?></div>
+                <div><span style="font-weight: 300">Статус: </span><?php echo $order['status']; ?></div>
+            </div>
+            <table class="order-products">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Цена</th>
+                        <th>Количество</th>
+                        <th>Сумма</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($order['flowers'] as $flower): ?>
+                        <tr>
+                            <td><?php echo $flower['flower_title']; ?></td>
+                            <td><?php echo number_format((int) ($flower['price_at_order']), 0, '', ' '); ?> ₽</td>
+                            <td><?php echo $flower['quantity']; ?></td>
+                            <td><?php echo number_format((int) ($flower['flower_title'] * $flower['price_at_order']), 0, '', ' '); ?>
+                                ₽</td>
+                        </tr>
+                        <?php $total += $flower['flower_title'] * $flower['price_at_order']; ?>
                     <?php endforeach; ?>
-                </div>
-            <?php } else { ?>
-                <p>У вас нет заказов</p><br><br>
-            <?php } ?>
+                </tbody>
+            </table>
+
+            <p><strong>Итого по заказу: <?php echo number_format((int) ($total), 0, '', ' '); ?> ₽</strong></p>
         </div>
-    </div>
-</body>
+    <?php endforeach; ?>
+
+    <?php if (!empty($message)) { ?>
+        <p><?php echo $message; ?></p>
+    <?php } ?>
+</div>
+
 <style>
     :root {
         --primary-color: #F6D0DD;
@@ -339,5 +357,3 @@ $orders = $stmt->fetchAll();
         }
     }
 </style>
-
-</html>
