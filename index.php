@@ -15,7 +15,6 @@ session_start();
 
 <body>
     <!-- header start -->
-    <!-- header start -->
     <header class="container">
         <a href="/?page=homepage">
             <div class="logo">
@@ -40,9 +39,7 @@ session_start();
                 <li><a href="/?page=catalog" class="menu-item">Каталог</a></li>
                 <li><a href="#advice" class="menu-item">Советы</a></li>
                 <li><a href="#FAQ" class="menu-item">FAQ</a></li>
-                <?php
-                if (!empty($_SESSION['username'])) {
-                ?>
+                <?php if (isset($_SESSION['username'])) { ?>
                     <li>
                         <div class="user_name">
                             <a href="/?page=profile"><?php
@@ -51,37 +48,26 @@ session_start();
                         </div>
                     </li>
                     <li><a href="/?page=cart"><img src="assets/media/catalog/basket.svg" alt="" style="height: 30px;"></a></li>
-                <?php
-                } else {
-                ?>
+                <?php } else { ?>
                     <li><a href="/?page=logIn" class="menu-item btn-exit">Войти</a></li>
-                <?php
-                }
-                ?>
+                <?php } ?>
 
-                <?php
-                if (!empty($_SESSION['username'])) {
-                ?>
+                <?php if (isset($_SESSION['username'])) { ?>
                     <a href="/?page=logOut">
                         <div class="exit">
                             <img src="assets/media/header/exit.png" alt="">
                         </div>
                     </a>
-                <?php
-                } else {
-                ?>
+                <?php } else { ?>
                     <a href="/?page=logIn">
                         <div class="enter">
                             <p>Войти</p>
                         </div>
                     </a>
-                <?php
-                }
-                ?>
+                <?php } ?>
             </ul>
         </div>
     </header>
-    <!-- header end -->
     <!-- header end -->
 
     <?php
