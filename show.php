@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     <input type="hidden" name="description" value="<?php echo $flower['description']; ?>">
                     <input type="hidden" name="image" value="<?php echo $flower['image']; ?>">
                     <input type="hidden" name="previous_page" value="<?php echo $_SERVER['REQUEST_URI']; ?>">
-                    <button type="submit" style="cursor: pointer;">
+                    <button type="submit">
                         Добавить в корзину
                     </button>
                 </form>
