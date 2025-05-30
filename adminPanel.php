@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = $_POST['id_product'];
         $old_image = $_POST['old_image'];
         unlink($old_image);
+
         $sql = 'DELETE FROM flowers WHERE id = :id';
         $stmt = $database->prepare($sql);
         $stmt->bindParam(':id', $id);
@@ -30,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $database->prepare($sql);
         $stmt->bindParam(':id', $id);
         $stmt->execute();
+
         $sql = 'DELETE FROM order_items WHERE order_id = :id';
         $stmt = $database->prepare($sql);
         $stmt->bindParam(':id', $id);
@@ -78,34 +80,11 @@ if ($action === 'products' || empty($action)) {
     $stmt->execute();
     $categories = $stmt->fetchAll();
 } elseif ($action === 'orders') {
+    // Получаем все заказы
     $sql = 'SELECT * FROM orders';
     $stmt = $database->prepare($sql);
     $stmt->execute();
     $orders = $stmt->fetchAll();
-
-    foreach ($orders as &$order) {
-        // Получаем товары из orders_items для текущего заказа
-        $sqlItems = 'SELECT * FROM order_items WHERE order_id = :order_id';
-        $stmtItems = $database->prepare($sqlItems);
-        $stmtItems->bindParam(':order_id', $order['id']);
-        $stmtItems->execute();
-        $items = $stmtItems->fetchAll();
-
-        // Теперь для каждого товара получаем информацию о цветке (flower)
-        foreach ($items as &$item) {
-            $sqlFlower = 'SELECT * FROM flowers WHERE id = :flower_id';
-            $stmtFlower = $database->prepare($sqlFlower);
-            $stmtFlower->bindParam(':flower_id', $item['flower_id']);
-            $stmtFlower->execute();
-            $flower = $stmtFlower->fetch();
-
-            // Добавляем информацию о цветке в товар
-            $item['flower'] = $flower;
-        }
-
-        // Добавляем товары в заказ
-        $order['items'] = $items;
-    }
 } elseif ($action === 'users') {
     $sql = 'SELECT * FROM users';
     $stmt = $database->prepare($sql);
@@ -144,7 +123,7 @@ if ($action === 'products' || empty($action)) {
                                     <p><?php echo htmlspecialchars($flower['title']); ?></p>
                                 </td>
                                 <td>
-                                    <img src="<?php echo htmlspecialchars($flower['image']); ?>"
+                                    <img src="<?php echo $flower['image']; ?>"
                                         alt="<?php echo htmlspecialchars($flower['title']); ?>">
                                 </td>
                                 <td>
@@ -206,24 +185,28 @@ if ($action === 'products' || empty($action)) {
                         <!-- Выводим товары в заказе -->
                         <div class="order-items" style="margin-top: 15px;">
                             <p><strong>Товары в заказе:</strong></p>
-                            <?php if (!empty($order['items'])): ?>
-                                <ul style="list-style-type: none; padding-left: 0;">
-                                    <?php foreach ($order['items'] as $item): ?>
-                                        <li style="margin-bottom: 10px; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-                                            <?php echo htmlspecialchars($item['flower']['title']); ?> ×
-                                            <?php echo htmlspecialchars($item['quantity']); ?> шт. −
-                                            <?php echo htmlspecialchars(number_format($item['price_at_order'] * $item['quantity'], 0, '', ' ')); ?>
-                                            ₽
-                                            <br>
-                                            <small>(Цена за шт.:
-                                                <?php echo htmlspecialchars(number_format($item['price_at_order'], 0, '', ' ')); ?>
-                                                ₽)</small>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            <?php else: ?>
-                                <p>Нет товаров в заказе</p>
-                            <?php endif; ?>
+
+                            <?php
+                            $sql = 'SELECT * FROM order_items WHERE order_id = :order_id';
+                            $stmt = $database->prepare($sql);
+                            $stmt->bindParam(':order_id', $order['id']);
+                            $stmt->execute();
+                            $flowers = $stmt->fetchAll();
+                            ?>
+                            <ul style="list-style-type: none; padding-left: 0;">
+                                <?php foreach ($flowers as $flower): ?>
+                                    <li style="margin-bottom: 10px; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
+                                        <?php echo htmlspecialchars($flower['flower_title']); ?> ×
+                                        <?php echo htmlspecialchars($flower['quantity']); ?> шт. −
+                                        <?php echo htmlspecialchars(number_format($flower['price_at_order'] * $flower['quantity'], 0, '', ' ')); ?>
+                                        ₽
+                                        <br>
+                                        <small>(Цена за шт.:
+                                            <?php echo htmlspecialchars(number_format($flower['price_at_order'], 0, '', ' ')); ?>
+                                            ₽)</small>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
                         </div>
 
                         <div class="btns_action">
