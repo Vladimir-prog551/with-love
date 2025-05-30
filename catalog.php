@@ -3,10 +3,10 @@
 include('database/connection.php');
 
 // вывод категорий
-$sql_category = 'SELECT * FROM categories';
-$stmt_category = $database->prepare($sql_category);
-$stmt_category->execute();
-$categories = $stmt_category->fetchAll();
+$sql = 'SELECT * FROM categories';
+$stmt = $database->prepare($sql);
+$stmt->execute();
+$categories = $stmt->fetchAll();
 
 $category = '';
 $id = '';
