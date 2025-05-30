@@ -16,15 +16,6 @@ $stmt = $database->prepare($sql);
 $stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
 $orders = $stmt->fetchAll();
-// 2. Получение товаров наших заказов
-foreach ($orders as &$order):
-    $sql = 'SELECT * FROM order_items WHERE order_id = :order:id';
-    $stmt = $database->prepare($sql);
-    $stmt->bindParam(':order_id', $order['id']);
-    $stmt->execute();
-    $order['flowers'] = $stmt->fetchAll();
-endforeach;
-unset($order);
 
 ?>
 
@@ -50,7 +41,15 @@ unset($order);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($order['flowers'] as $flower): ?>
+                    <?php
+                    $sql = 'SELECT * FROM order_items WHERE order_id = :orders_id';
+                    $stmt = $database->prepare($sql);
+                    $stmt->bindParam(':order_id', $order['id']);
+                    $stmt->execute();
+                    $flowers = $stmt->fetchAll();
+                    ?>
+
+                    <?php foreach ($flowers as $flower): ?>
                         <tr>
                             <td><?php echo $flower['flower_title']; ?></td>
                             <td><?php echo number_format((int) ($flower['price_at_order']), 0, '', ' '); ?> ₽</td>
