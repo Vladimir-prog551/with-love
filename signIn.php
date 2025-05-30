@@ -56,12 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($flag) {
         $hash = password_hash($password, PASSWORD_DEFAULT);
+        $role = 'Пользователь';
         $sql = 'INSERT INTO users (username, email, password, role) VALUES (:username, :email, :password, :role)';
         $stmt = $database->prepare($sql);
         $stmt->bindParam(':username', $username);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':password', $hash);
-        $role = 'Пользователь';
         $stmt->bindParam(':role', $role);
         if ($stmt->execute()) {
             $message = 'Регистрация прошла успешно';
@@ -80,25 +80,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form action="" method="post">
             <div class="input-group">
-                <input type="text" id="username" name="username" value="<?php echo $username ?>" required>
+                <input type="text" id="username" name="username" value="<?php echo htmlspecialchars($username); ?>" required>
                 <label for="username">Имя пользователя</label>
                 <div class="underline"></div>
             </div>
 
             <div class="input-group">
-                <input type="text" id="email" name="email" value="<?php echo $email ?>" required>
-                <label for="username">Электронная почта</label>
+                <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
+                <label for="email">Электронная почта</label>
                 <div class="underline"></div>
             </div>
 
             <div class="input-group">
-                <input type="password" id="password" name="password" value="<?php echo $password ?>" required>
+                <input type="password" id="password" name="password" value="<?php echo htmlspecialchars($password); ?>" required>
                 <label for="password">Пароль</label>
                 <div class="underline"></div>
             </div>
 
             <div class="input-group">
-                <input type="password" id="re_password" name="re_password" value="<?php echo $re_password ?>" required>
+                <input type="password" id="re_password" name="re_password" value="<?php echo htmlspecialchars($re_password); ?>" required>
                 <label for="re_password">Повторите пароль</label>
                 <div class="underline"></div>
             </div>
@@ -123,5 +123,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- sign_in end -->
 
 <?php if (!empty($message)) { ?>
-    <p><?php echo $message; ?></p>
-<?php } ?>
+        <p><?php echo $message; ?></p>
+    <?php } ?>
